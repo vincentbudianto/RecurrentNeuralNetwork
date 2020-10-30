@@ -40,6 +40,26 @@ class HiddenLayer:
             self.output_weight = output_weight
             self.hidden_transition_weight = hidden_transition_weight
     
+    def initialize_bias(self, bias_type = -1, hidden_bias = None, output_bias = None):
+        if bias_type == -1:
+            # Random
+            max_val = 1
+            min_val = -1
+            self.hidden_bias = (np.random.rand(self.hidden_size) * (max_val - min_val)) + min_val
+            self.output_bias = (np.random.rand(self.output_size) * (max_val - min_val)) + min_val
+        elif bias_type == 0:
+            # Zero
+            self.hidden_bias = np.zeros((self.hidden_size))
+            self.output_bias = np.zeros((self.output_size))
+        elif bias_type == 1:
+            # One
+            self.hidden_bias = np.ones((self.hidden_size))
+            self.output_bias = np.ones((self.output_size))
+        else:
+            # Explicit
+            self.hidden_bias = hidden_bias
+            self.output_bias = output_bias
+    
     def reset_history(self):
         self.input_history = []
         self.hidden_history = []
@@ -75,30 +95,23 @@ class HiddenLayer:
         self.reset_history()
         self.previous_hidden = np.zeros(self.hidden_size)
         for sequence in sequences:
-            print("ITERATE")
             self.forward_propagation(sequence, record_history)
     
     def forward_propagation(self, input_features, record_history = False):
-        print(input_features)
-        print(self.hidden_weight)
         if record_history:
             self.input_history.append(input_features)
         
         sum_input = np.matmul(np.array(input_features), self.hidden_weight)
         sum_hidden = np.matmul(self.previous_hidden, self.hidden_transition_weight)
 
-        hidden_total = sum_input + sum_hidden
-
-        print(hidden_total)
+        hidden_total = sum_input + sum_hidden + self.hidden_bias
 
         self.previous_hidden = self.activation_function(hidden_total, self.hidden_activation)
         
         if record_history:
             self.hidden_history.append(self.previous_hidden)
         
-        output_total = np.matmul(self.previous_hidden, self.output_weight)
-
-        print(output_total)
+        output_total = np.matmul(self.previous_hidden, self.output_weight) + self.output_bias
         
         self.previous_output = self.activation_function(output_total, self.output_activation)
 
@@ -123,10 +136,10 @@ class HiddenLayer:
 if __name__ == "__main__":
     h1 = HiddenLayer()
     h1.initialize_weight(1)
+    h1.initialize_bias(1)
 
     sequences = [[1, 2, -3, 4], [3, -1, 2, 0], [1, -1, 4, -3], [3, 2, 0, -1]]
     h1.forward_propagation_sequences(sequences, True)
-    print("FIN")
     print(h1.input_history)
     print(h1.hidden_history)
     print(h1.output_history)
